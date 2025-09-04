@@ -1,91 +1,51 @@
 import { Xcontract } from "./contract";
 import { address } from "framer-motion/client";
 export async function displayTweets(userAddress, tweetContainerRef) {
-  const tweetsContainer = tweetContainerRef.current;
-  if (!tweetsContainer) {
-    return;
-  }
-  let tempTweets = [];
-  tweetsContainer.innerHTML = "";
   try {
-    tempTweets = await Xcontract.methods.getAllPost(userAddress).call({
+    let tempTweets = await Xcontract.methods.getAllPost(userAddress).call({
       from: userAddress,
       function(error, transactionHash, result) {
         console.log({ result, transactionHash });
       },
     });
+    const jstweet = normalizeTweets(tempTweets);
+    jstweet.sort((a, b) => (b.timestamp > a.timestamp ? 1 : -1));
+    return jstweet;
   } catch (error) {
     console.log(error);
   }
-  let tweets = [...tempTweets];
-  tweets.sort((a, b) => (b.timestamp > a.timestamp ? 1 : -1));
-  for (let i = 0; i < tweets.length; i++) {
-    const tweetElement = document.createElement("div");
-    tweetElement.className = "tweet";
-
-    const userIcon = document.createElement("img");
-    userIcon.className = "user-icon";
-    userIcon.src = `https://api.dicebear.com/9.x/pixel-art/svg?seed=${tweets[i].author}`;
-    userIcon.alt = "User Icon";
-
-    tweetElement.appendChild(userIcon);
-
-    const tweetInner = document.createElement("div");
-    tweetInner.className = "tweet-inner";
-
-    tweetInner.innerHTML += `
-                <div class="author">${shortAddress(tweets[i].author)}</div>
-                <div class="content">${tweets[i].content}</div>
-            `;
-
-    const likeButton = document.createElement("button");
-    likeButton.className = "like-button";
-    likeButton.innerHTML = `
-    🤍
-                <span class="likes-count">${tweets[i].likes}</span>
-            `;
-    likeButton.setAttribute("data-id", tweets[i].id);
-    likeButton.setAttribute("data-author", tweets[i].author);
-
-    addLikeButtonListener(likeButton, tweets[i].id, tweets[i].author);
-    tweetInner.appendChild(likeButton);
-    tweetElement.appendChild(tweetInner);
-    tweetsContainer.appendChild(tweetElement);
-  }
-  return tempTweets;
+}
+function normalizeTweets(rawTweets) {
+  return rawTweets.map((tweet) => ({
+    id: Number(tweet.id ?? tweet[0]),
+    author: tweet.author ?? tweet[1],
+    content: tweet.content ?? tweet[2],
+    likes: Number(tweet.likes ?? tweet[3]),
+    dislikes: Number(tweet.dislikes ?? tweet[4]),
+    timestamp: Number(tweet.timestamp ?? tweet[5]),
+  }));
 }
 
-function shortAddress(address, startLength = 6, endLength = 4) {
+export function shortAddress(address, startLength = 6, endLength = 4) {
   return `${address.slice(0, startLength)}...${address.slice(-endLength)}`;
 }
-async function likeTweets(id, userAddress) {
-  try {
-    Xcontract.methods
-      .likepost(userAddress, id)
-      .send({ from: userAddress }) // your connected wallet
-      .on("transactionHash", (hash) => {
-        console.log("Tx Hash:", hash);
-      })
-      .on("receipt", (receipt) => {
-        console.log("Tx Receipt:", receipt);
-      })
-      .on("error", (error) => {
-        console.error("Tx Error:", error);
-      });
-  } catch (err) {
-    console.log(`err likifnalsjdfkas post`, err);
-  } finally {
-  }
-}
-export function addLikeButtonListener(likeButton, address, id) {
-  likeButton.addEventListener("click", async (e) => {
-    e.preventDefault();
-    e.currentTarget.innerHTML = '<div class="spinner"></div>';
-    e.currentTarget.disabled = true;
+export async function likeTweets(id, userAddress) {
+  return new Promise(async (resolve, reject) => {
     try {
-      await likeTweets(address, id);
-    } catch (error) {
-      console.error("Error liking tweet:", error);
+      Xcontract.methods
+        .likepost(userAddress, id)
+        .send({ from: userAddress }) // connected wallet
+        .on("transactionHash", (hash) => {
+          console.log("Tx Hash:", hash);
+        })
+        .on("receipt", (receipt) => {
+          resolve(receipt);
+        })
+        .on("error", (error) => {
+          reject(error);
+        });
+    } catch (err) {
+      console.log(`err likifnalsjdfkas post`, err);
     } finally {
     }
   });

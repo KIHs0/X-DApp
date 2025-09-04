@@ -4,26 +4,41 @@ import toast, { Toaster } from "react-hot-toast";
 import { Search, Home, Bell, Mail, User, Hash } from "lucide-react";
 import { Xcontract } from '../../uitls/contract';
 import { displayTweets } from "../../uitls/index";
-import { addLikeButtonListener } from "../../uitls/index";
+import { likeTweets, shortAddress } from "../../uitls/index";
+import { Pn } from "./pn";
 const X = ({ wallet, setWallet }) => {
     const [text, settext] = useState('')
-    const [res, setres] = useState('')
+    const [likeState, setlikeState] = useState({})
+    const [res, setres] = useState([])
+    const [showpanel, setshowpanel] = useState(false)
+    const [showprofile, setshowprofile] = useState(false)
     const [loader, setLoader] = useState(false)
     const tweetContainerRef = useRef(null)
     useEffect(() => {
         const fetchData = async () => {
             let val = await displayTweets(wallet, tweetContainerRef);
+            console.log(Array.isArray(val))
+            val.sort((a, b) => (b.timestamp > a.timestamp ? 1 : -1));
             setres(val)
         };
         fetchData();
     }, [])
-
+    const handlelike = async (id, author) => {
+        try {
+            setlikeState(prev => ({ ...prev, [id]: true }))
+            await likeTweets(id, author)
+            let updateTweets = await displayTweets(author, tweetContainerRef);
+            setres(updateTweets)
+        } catch (err) {
+            console.log(err)
+        } finally {
+            setlikeState(prev => ({ ...prev, [id]: false }))
+        }
+    }
     const post = async () => {
         try {
             setLoader(true)
-            await Xcontract.methods.Post(text).send({ from: wallet }, (error, transactionHash) => {
-                console.log(error, transactionHash);
-            })
+            await Xcontract.methods.Post(text).send({ from: wallet })
         }
         catch (error) {
             toast.error("Please Succedd Transaction")
@@ -31,8 +46,8 @@ const X = ({ wallet, setWallet }) => {
         } finally {
             settext("")
             setLoader(false)
-            const res = await displayTweets(wallet, tweetContainerRef)
-            console.log(res)
+            const updatedTweets = await displayTweets(wallet, tweetContainerRef)
+            setres(updatedTweets)
         }
     }
     const inputtake = (e) => {
@@ -55,30 +70,41 @@ const X = ({ wallet, setWallet }) => {
         <div className="bg-black text-white min-h-screen flex">
             <Toaster position="top-right" reverseOrder={false} />
             {/* Left Sidebar */}
-            <aside className="w-1/5 border-r border-gray-800 p-4 hidden md:flex flex-col space-y-2 ">
-                <h1 className="text-3xl font-bold text-cyan-400">𝕏</h1>
-                <nav className="flex flex-col space-y-5 text-lg">
-                    <a href="#" className="flex items-center gap-3 hover:text-cyan-400">
+            <aside className="w-1/5 border-r border-gray-800 p-4 hidden md:flex flex-col space-y-15 ">
+                <h1 className="text-3xl font-bold text-cyan-400"> <img
+                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTYdXuZIWN75tUhTFOEJOwL0JeL8Y0cjjI38Q&s"
+                    className="w-28 h-28 rounded-full border-none outline-none bg-transparent"
+                /></h1>
+                <nav className="flex flex-col space-y-8 text-lg">
+                    <a href="/" className="flex items-center gap-3 hover:text-cyan-400">
                         <Home /> Home
                     </a>
-                    <a href="#" className="flex items-center gap-3 hover:text-cyan-400">
+
+                    <a href="https://github.com/KIHs0/X-DApp" className="flex items-center gap-3 hover:text-cyan-400">
                         <Hash /> Explore
                     </a>
-                    <a href="#" className="flex items-center gap-3 hover:text-cyan-400">
+                    <a className="flex items-center gap-3 hover:text-cyan-400" onClick={() => { setshowpanel(true) }}>
                         <Bell /> Notifications
                     </a>
-                    <a href="#" className="flex items-center gap-3 hover:text-cyan-400">
+                    <a href='mailto:kihsogaming@gmail.com' className="flex items-center gap-3 hover:text-cyan-400">
                         <Mail /> Messages
                     </a>
-                    <a href="#" className="flex items-center gap-3 hover:text-cyan-400">
+                    <a className="flex items-center gap-3 hover:text-cyan-400" onClick={() => { setshowprofile(true) }}>
+
                         <User /> Profile
                     </a>
                 </nav>
-                <button className="bg-cyan-500 rounded-full py-2 absolute bottom-19 w-40 h-min font-bold hover:bg-cyan-600 transition" onClick={disconnectWallet}>
+                <button className="bg-cyan-500 rounded-full py-2 absolute bottom-3 w-40 h-min font-bold hover:bg-cyan-600 transition" onClick={disconnectWallet}>
                     Disconnect Wallet
                 </button>
             </aside>
-
+            {/* Side Panel */}
+            {showpanel && (
+                <Pn setshowpanel={setshowpanel} />
+            )}
+            {showprofile && (
+                <Pn address={shortAddress(wallet)} setshowpanel={setshowprofile} />
+            )}
             {/* Main Feed */}
             <main className="w-full md:w-3/5 border-r border-gray-800">
                 {/* Post box */}
@@ -107,32 +133,37 @@ const X = ({ wallet, setWallet }) => {
                     transition={{ delay: 0.5, duration: 1 }}
                     className="p-4 border-b border-gray-800 hover:bg-gray-900 transition tweetsContainer"
                 >
-                    {res && tweets.map(tweet => {
-                        <div className="tweet" key={tweet.id}>
-                            <img
-                                className="user-icon"
-                                src={`https://api.dicebear.com/9.x/pixel-art/svg?seed=${tweet.author}`}
-                                alt="User Icon"
-                            />
-                            <div className="tweet-inner">
-                                <div className="author">{shortAddress(tweet.author)}</div>
-                                <div className="content">{tweet.content}</div>
-                                <button
-                                    className="like-button"
-                                    onClick={() => handleLike(tweet.id, tweet.author)}
-                                    disabled={likeState?.loading}
-                                >
-                                    {likeState?.loading ? (
-                                        <div className="spinner"></div>
-                                    ) : (
-                                        <>
-                                            🤍 <span className="likes-count">{likeState?.likes}</span>
-                                        </>
-                                    )}
-                                </button>
+                    {res && res.length > 0 ? (
+                        res.map(tweet => (
+                            <div className="tweet" key={(tweet.id)}>
+                                <img
+                                    className="user-icon"
+                                    src={`https://api.dicebear.com/9.x/pixel-art/svg?seed=${tweet.author}`}
+                                    alt="User Icon"
+                                />
+                                <div className="tweet-inner">
+                                    <div className="author">{shortAddress(tweet.author)}</div>
+                                    <div className="content">{tweet.content}</div>
+                                    <button
+                                        className="like-button"
+                                        onClick={() => handlelike((tweet.id), (tweet.author))}
+                                        disabled={loader}
+                                    >
+                                        {likeState[tweet.id] ? (
+                                            <div className="spinner"></div>
+                                        ) : (
+                                            <>
+                                                🤍 <span className="likes-count">{(tweet.likes)}</span>
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                    })}
+                        ))
+                    ) : (
+                        <p>No posts found yet</p>
+                    )}
+
                 </Motion.div>
             </main>
 
