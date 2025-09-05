@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { motion as Motion } from "framer-motion";
 import toast, { Toaster } from "react-hot-toast";
-import { Search, Home, Bell, Mail, User, Hash } from "lucide-react";
+import { Search, Home, Bell, Mail, User, Hash, LogOut } from "lucide-react";
 import { Xcontract } from '../../uitls/contract';
 import { displayTweets } from "../../uitls/index";
 import { likeTweets, shortAddress } from "../../uitls/index";
@@ -59,7 +59,7 @@ const X = ({ wallet, setWallet }) => {
                 method: "wallet_revokePermissions",
                 params: [{ eth_accounts: {} }],
             });
-            toast.success('Wallet disconnected')
+            toast.success('Disconnected Wallet')
             setWallet(null);
         } catch (err) {
             console.log("Error disconnecting wallet:", err);
@@ -70,33 +70,42 @@ const X = ({ wallet, setWallet }) => {
         <div className="bg-black text-white min-h-screen flex">
             <Toaster position="top-right" reverseOrder={false} />
             {/* Left Sidebar */}
-            <aside className="w-1/5 border-r border-gray-800 p-4 hidden md:flex flex-col space-y-15 ">
-                <h1 className="text-3xl font-bold text-cyan-400"> <img
+            <aside className="
+    p-4 
+    md:relative
+     md:top-0 md:left-0    md:space-y-39 md:w-1/5  md:flex md:flex-col
+     bottom-0 left-2/28 w-max flex h-max  rounded-4xl  flex-row   bg-black
+        fixed   
+  ">
+                <h1 className="text-3xl font-bold text-cyan-400 hidden md:flex" > <img
                     src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTYdXuZIWN75tUhTFOEJOwL0JeL8Y0cjjI38Q&s"
                     className="w-28 h-28 rounded-full border-none outline-none bg-transparent"
                 /></h1>
-                <nav className="flex flex-col space-y-8 text-lg">
-                    <a href="/" className="flex items-center gap-3 hover:text-cyan-400">
-                        <Home /> Home
+                <nav className="flex md:flex-col  space-x-7   md:space-y-8 text-lg">
+                    <a href="/" className="flex items-center gap-3 hover:text-cyan-400 ">
+                        <Home /><span className="hidden md:inline">Home</span>
                     </a>
 
-                    <a href="https://github.com/KIHs0/X-DApp" className="flex items-center gap-3 hover:text-cyan-400">
-                        <Hash /> Explore
+                    <a href="https://github.com/KIHs0/X-DApp" className="flex items-center md:gap-3 hover:text-cyan-400">
+                        <Hash /> <span className="hidden md:inline">Explore</span>
                     </a>
                     <a className="flex items-center gap-3 hover:text-cyan-400" onClick={() => { setshowpanel(true) }}>
-                        <Bell /> Notifications
+                        <Bell /> <span className="hidden md:inline">Notifications</span>
                     </a>
                     <a href='mailto:kihsogaming@gmail.com' className="flex items-center gap-3 hover:text-cyan-400">
-                        <Mail /> Messages
+                        <Mail /> <span className="hidden md:inline">Messages</span>
                     </a>
                     <a className="flex items-center gap-3 hover:text-cyan-400" onClick={() => { setshowprofile(true) }}>
-
-                        <User /> Profile
+                        <User /> <span className="hidden md:inline">Profile</span>
                     </a>
+                    <button className=" hidden    rounded-full  font-bold hover:bg-cyan-600 transition" onClick={disconnectWallet}>
+                        <LogOut /> <span className="hidden md:inline ">Disconnect Wallet</span>
+                    </button>
                 </nav>
-                <button className="bg-cyan-500 rounded-full py-2 absolute bottom-3 w-40 h-min font-bold hover:bg-cyan-600 transition" onClick={disconnectWallet}>
-                    Disconnect Wallet
+                <button className="md:bg-cyan-500 text-1xl  left-0 rounded-full md:flex  md:absolute md:bottom-0 md:h-min  md:w-max md:py-2 md:px-4  font-bold hover:bg-cyan-600 transition" onClick={disconnectWallet}>
+                    <LogOut /> <span className="hidden md:inline ">Disconnect Wallet</span>
                 </button>
+
             </aside>
             {/* Side Panel */}
             {showpanel && (
@@ -117,10 +126,10 @@ const X = ({ wallet, setWallet }) => {
                     <textarea
                         value={text}
                         placeholder="What is happening?!"
-                        className="bg-transparent w-full resize-none outline-none text-lg placeholder-gray-400"
+                        className="bg-transparent md:w-full resize-none outline-none md:text-lg text-sm w-2rem placeholder-gray-400"
                         onChange={inputtake}
                     />
-                    <button className="bg-cyan-500 rounded-full py-4  bottom-19 w-40 h-min font-bold hover:bg-cyan-600 transition" onClick={post}>
+                    <button className="bg-cyan-500 rounded-2xl py-4  bottom-19 md:w-40 w-18 text-sm h-min font-bold hover:bg-cyan-600 transition" onClick={post}>
                         {loader ? (<div className="spinner"></div>) : (<h1>Post</h1>)}
                     </button>
                 </div>
@@ -168,7 +177,7 @@ const X = ({ wallet, setWallet }) => {
             </main>
 
             {/* Right Sidebar */}
-            <aside className="hidden lg:flex w-1/4 flex-col space-y-6 p-4">
+            <aside className="hidden md:flex lg:flex w-1/4 flex-col space-y-6 p-4">
                 <div className="bg-gray-900 rounded-2xl p-3">
                     <div className="flex items-center bg-gray-800 p-2 rounded-full">
                         <Search className="text-gray-400" />
@@ -183,20 +192,25 @@ const X = ({ wallet, setWallet }) => {
                 {/* // right sidebar */}
                 <div className="bg-gray-900 rounded-2xl p-4 space-y-3">
                     <h2 className="font-bold text-xl">What’s happening</h2>
-                    <p className="text-gray-400">#ReactJS · Trending</p>
+                    <p className="text-gray-400">#Solidity · Trending</p>
                     <p className="text-gray-400">#Ethereum · Trending</p>
-                    <p className="text-gray-400">#AI · Trending</p>
+                    <p className="text-gray-400">#Vitalik Buterin · Trending</p>
+                    <p className="text-gray-400">#Web3JS · Trending</p>
+                    <p className="text-gray-400">#Ethers · Trending</p>
+                    <p className="text-gray-400">#Hardhat · Trending</p>
+                    <p className="text-gray-400">#Azuki · Trending</p>
+                    <p className="text-gray-400">#ERC721 · Trending</p>
                 </div>
 
                 <div className="bg-gray-900 rounded-2xl p-4 space-y-3">
                     <h2 className="font-bold text-xl">Who to follow</h2>
                     <div className="flex justify-between items-center">
                         <div>
-                            <p className="font-bold">Dev Guy</p>
-                            <p className="text-gray-400">@devguy</p>
+                            <p className="font-bold">KIHs0</p>
+                            <p className="text-gray-400">@kihso</p>
                         </div>
                         <button className="bg-white text-black rounded-full px-3 py-1 text-sm font-bold">
-                            Follow
+                            <a href="https://github.com/KIHs0" className="font-bold">Follow</a>
                         </button>
                     </div>
                 </div>
